@@ -15,20 +15,16 @@ val Greeting : State = state(Parent) {
         builtAPI.buildSearchApi()
     }
     onEntry {
-        furhat.ask("What song do you like?")
+        random(
+            { furhat.say("Hello there! I'm MusicHat, the music robot. Let's play music together!") },
+            { furhat.say("Hey buddy! I'm MusicHat, the music robot. Let's listen to some songs!") }
+        )
+        goto(AskUserType)
     }
-/*
 
-    onResponse<Yes> {
-        furhat.say("")
-    }
 
-    onResponse<No> {
-        furhat.say("No poop.")
-    }
-*/
 
-    onResponse {
+/*    onResponse {
         furhat.say("Oh, you like "+ it.text)
         runBlocking {
             val searchResults = builtAPI.trackSearch("track:"+it.text)
@@ -37,5 +33,5 @@ val Greeting : State = state(Parent) {
             furhat.say("That is a song by " + firstResult[0])
             furhat.say("It is " + firstResult[2] + "minutes long.")
         }
-    }
+    }*/
 }
