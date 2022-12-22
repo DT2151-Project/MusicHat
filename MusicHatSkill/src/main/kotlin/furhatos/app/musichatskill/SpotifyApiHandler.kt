@@ -7,8 +7,8 @@ import com.adamratzman.spotify.spotifyAppApi
 import com.adamratzman.spotify.utils.Market
 
 class SpotifyApiHandler {
-    private val clientID = ""
-    private val clientSecret = ""
+    private val clientID = "9e0aff0020ab499e80ffb83a337779e3"
+    private val clientSecret = "d6fe94867ca74b57bf26627e2fe065f8"
     private var api: SpotifyAppApi? = null
 
     init {
