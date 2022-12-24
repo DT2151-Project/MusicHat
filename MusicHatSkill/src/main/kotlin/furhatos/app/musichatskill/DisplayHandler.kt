@@ -1,5 +1,6 @@
 import com.adamratzman.spotify.models.SpotifyPublicUser
 import com.adamratzman.spotify.models.SpotifySearchResult
+import com.adamratzman.spotify.models.Track
 
 // Handles displaying and prettying of information
 class DisplayHandler {
@@ -29,24 +30,22 @@ class DisplayHandler {
         }
     }
 
-    fun parsePopularTrackResult(searchResults: SpotifySearchResult): List<String> {
-        var resultSet: MutableList<String> = mutableListOf()
-        val t = searchResults.tracks!!.items[1]
-        println(t)
+    fun formatTrackResult(track: Track?): List<String> {
+        var result:MutableList<String> = mutableListOf()
 
-        resultSet.add(t.artists[0].name)
-        resultSet.add(t.name)
+        result.add(track!!.artists.first().name)
+        result.add(track.name)
 
-        val timeInSeconds = (t.length/1000).toInt()
+        val timeInSeconds = (track.length/1000).toInt()
         val minutes = (timeInSeconds/60).toInt()
         val remainderSeconds = (timeInSeconds%60).toInt()
         val timeString = "$minutes minutes and $remainderSeconds seconds"
-        resultSet.add(timeString)
+        result.add(timeString)
 
-        resultSet.add(t.externalUrls.spotify.toString())
-        resultSet.add(t.previewUrl.toString())
+        result.add(track.externalUrls.spotify.toString())
+        result.add(track.previewUrl.toString())
 
-        return resultSet
+        return result
     }
 
 

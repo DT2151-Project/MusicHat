@@ -7,7 +7,7 @@ import javax.sound.sampled.AudioInputStream
 import javax.sound.sampled.AudioSystem
 
 
-class Converter constructor(private val input: InputStream, private val close: Boolean = false) {
+class Converter constructor(private val input: InputStream) {
     private var audioFormat: AudioFormat? = null
     fun withTargetFormat(targetAudioFormat: AudioFormat?): Converter {
         audioFormat = targetAudioFormat
@@ -54,7 +54,7 @@ class Converter constructor(private val input: InputStream, private val close: B
 
     companion object {
         fun convertFrom(input: InputStream): Converter {
-            return Converter(input, false)
+            return Converter(input)
         }
     }
 }
