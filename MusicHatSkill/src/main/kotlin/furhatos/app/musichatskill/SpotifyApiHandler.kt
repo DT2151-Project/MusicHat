@@ -8,9 +8,6 @@ import com.adamratzman.spotify.models.Track
 import com.adamratzman.spotify.spotifyAppApi
 import com.adamratzman.spotify.utils.Market
 import kotlin.collections.ArrayList
-import kotlin.random.Random
-
-val GENRE = listOf("trip-hop", "world music", "new age", "dream pop", "classical pop", "acappella", "bossanova", "post rock", "brit pop", "dub", "electro", "jungle", "drum and base", "big beat", "break beat", "psychedelictrance", "trance", "ambient", "electrophonic", "folk", "chamber pop", "synth pop", "orchestra", "rap", "house", "R and B", "disco", "punk", "soul", "reggae", "pop", "art rock")
 
 class SpotifyApiHandler {
     private val clientID = ""
@@ -21,7 +18,7 @@ class SpotifyApiHandler {
 
     }
 
-    fun String.removeWhitespaces() = replace(" ", "%")
+    private fun String.removeWhitespaces() = replace(" ", "%")
 
 
     /// Pulls the developer ClientID and ClientSecret tokens provided
@@ -37,6 +34,8 @@ class SpotifyApiHandler {
         return api!!.users.getProfile(userQuery)
     }
 
+    // Find a list of songs related to a specific genre
+    // Return: 3 random songs
     suspend fun genreSearch(searchQuery: String): MutableList<Track?> {
         println(searchQuery.removeWhitespaces())
         val playlistResult = api!!.search.searchPlaylist(searchQuery.removeWhitespaces(), 5, 1, market=Market.US)
@@ -56,13 +55,36 @@ class SpotifyApiHandler {
         return trackSuggestion
     }
 
-
-    // Performs Spotify database query for queries related to track information. Returns
-    // the results as a SpotifySearchResult object.
+    // Find a track
+    // Return: single track
     suspend fun trackSearch(searchQuery: String): Track? {
-        val searchResult = api!!.search.searchTrack(searchQuery, 10, 1, market=Market.US)
+        val searchResult = api!!.search.searchTrack(searchQuery.removeWhitespaces(), 10, 1, market=Market.US)
 
         return api!!.tracks.getTrack(searchResult[0].uri.uri, market=Market.US)
+    }
+
+    // Find artists that have a track under the song name
+    // Return: the song by 3 random artists
+    suspend fun artistSongSearch(searchQuery: String): MutableList<Track> {
+        val searchResult = api!!.search.searchTrack(searchQuery.removeWhitespaces(), 10, 1, market=Market.US)
+
+
+        val artistList:MutableList<Pair<String, Track>> = mutableListOf()
+        for (i in searchResult.items){
+            var item = Pair(i.artists.first().name, i)
+
+            if (artistList.all { it.first != item.first }) {
+                artistList.add(item)
+            }
+        }
+
+        val artistSuggestion: MutableList<Track> = mutableListOf()
+        for (t in artistList.shuffled().drop(artistList.size-3)) {
+            println(t.first)
+            artistSuggestion.add(t.second)
+        }
+
+        return artistSuggestion
     }
 
 }

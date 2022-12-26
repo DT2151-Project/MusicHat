@@ -31,6 +31,8 @@ val Greeting : State = state(Parent) {
     }
 */
 
+    // FIND 3 SONGS THAT CORRESPOND TO A GENRE
+    /*
     onResponse {
         runBlocking {
             val genreResult = builtAPI.genreSearch("playlist:"+it.text)
@@ -53,7 +55,33 @@ val Greeting : State = state(Parent) {
             //TODO: on new response play the requested song
         }
     }
+     */
 
+    // LIST 3 DIFFERENT SONG ARTISTS FOR THE USER TO CHOOSE FROM
+    onResponse {
+        runBlocking{
+            val songResult = builtAPI.artistSongSearch("track:"+it.text)
+
+            furhat.say("Oh you like " + it.text)
+            val suggestUtt = utterance {
+                + "Here are 3 songs that fit your genre."
+                + "Our first pick is by ${songResult[0]!!.artists.first().name}."
+                + "If you don't like that one I have one by ${songResult[1]!!.artists.first().name}."
+                + "Otherwise ${songResult[2]!!.artists.first().name} also performed this title."
+            }
+            furhat.say(suggestUtt)
+
+            val selectUtt = utterance {
+                + Gestures.BigSmile
+                + "Which one do you want to play?"
+            }
+
+            furhat.say(selectUtt)
+            //TODO: on new response play the song by the requested artist
+        }
+    }
+
+    // FIND A SONG AND PLAY THIS ONE THROUGH FURHAT
 /*
 onResponse {
     runBlocking {
