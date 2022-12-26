@@ -9,6 +9,8 @@ import kotlinx.coroutines.runBlocking
 import furhatos.app.musichatskill.Track
 import furhatos.gestures.Gestures
 import furhatos.app.musichatskill.Util
+import furhatos.gestures.Gestures.ExpressDisgust
+import kotlin.random.Random
 
 val builtAPI = SpotifyApiHandler()
 val displayHandler = DisplayHandler()
@@ -19,7 +21,7 @@ val Greeting : State = state(Parent) {
         builtAPI.buildSearchApi()
     }
     onEntry {
-        furhat.ask("What genre do you like?")
+        furhat.ask("What song do you like?")
     }
 /*
     onResponse<Yes> {
@@ -58,6 +60,7 @@ val Greeting : State = state(Parent) {
      */
 
     // LIST 3 DIFFERENT SONG ARTISTS FOR THE USER TO CHOOSE FROM
+    /*
     onResponse {
         runBlocking{
             val songResult = builtAPI.artistSongSearch("track:"+it.text)
@@ -80,36 +83,37 @@ val Greeting : State = state(Parent) {
             //TODO: on new response play the song by the requested artist
         }
     }
+     */
 
     // FIND A SONG AND PLAY THIS ONE THROUGH FURHAT
-/*
-onResponse {
-    runBlocking {
-        val searchResults = builtAPI.trackSearch("track:"+it.text)
-        val parsedResults = displayHandler.formatTrackResult(searchResults)
+    onResponse {
+        runBlocking {
+            val searchResults = builtAPI.trackSearch("track:"+it.text)
+            val parsedResults = displayHandler.formatTrackResult(searchResults)
 
-        Util.convertURLtoWAV(parsedResults[Track.PREVIEW.value],parsedResults[Track.NAME.value])
+            Util.convertURLtoWAV(parsedResults[Track.PREVIEW.value],parsedResults[Track.NAME.value])
 
-        furhat.say("Oh, you like " + parsedResults[Track.NAME.value])
-        val artistUtt = utterance {
-            + "That is a song by "
-            + parsedResults[Track.ARTIST.value]
-            + Gestures.Wink
-        }
-        furhat.say(artistUtt)
-        val previewUtt = utterance {
-            + "It is "
-            + parsedResults[Track.DURATION.value]
-            + " long. Here is a preview!"
-            + Gestures.BigSmile
-        }
-        furhat.say(previewUtt)
+            furhat.say("Oh, you like " + parsedResults[Track.NAME.value])
+            val artistUtt = utterance {
+                + "That is a song by "
+                + parsedResults[Track.ARTIST.value]
+                + Gestures.Wink
+            }
+            furhat.say(artistUtt)
+            val previewUtt = utterance {
+                + "It is "
+                + parsedResults[Track.DURATION.value]
+                + " long. Here is a preview!"
+                + Gestures.BigSmile
+            }
+            furhat.say(previewUtt)
 
-        furhat.say{
-            + Audio(Util.filePathToURL(parsedResults[Track.NAME.value]).toString(), "SONG PREVIEW", speech=true)
+            furhat.say{
+                + Audio(Util.filePathToURL(parsedResults[Track.NAME.value]).toString(), "SONG PREVIEW", speech=true)
+            }
+
+            var gesture = ExpressDisgust
         }
     }
-}
- */
 
 }
