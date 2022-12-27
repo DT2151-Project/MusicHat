@@ -48,6 +48,7 @@ repositories {
 dependencies {
     implementation 'com.furhatrobotics.furhatos:furhat-commons:2.4.1'
     implementation 'com.adamratzman:spotify-api-kotlin-core:3.8.5'
+    implementation("com.googlecode.soundlibs:mp3spi:1.9.5.4")
 }
 
 

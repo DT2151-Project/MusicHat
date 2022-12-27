@@ -10,6 +10,6 @@ class MusichatskillSkill : Skill() {
     }
 }
 
-suspend fun main(args: Array<String>) {
+fun main(args: Array<String>) {
     Skill.main(args)
 }

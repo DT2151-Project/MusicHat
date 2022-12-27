@@ -29,6 +29,26 @@ class DisplayHandler {
         }
     }
 
+    fun parsePopularTrackResult(searchResults: SpotifySearchResult): List<String> {
+        var resultSet: MutableList<String> = mutableListOf()
+        val t = searchResults.tracks!!.items[1]
+        println(t)
+
+        resultSet.add(t.artists[0].name)
+        resultSet.add(t.name)
+
+        val timeInSeconds = (t.length/1000).toInt()
+        val minutes = (timeInSeconds/60).toInt()
+        val remainderSeconds = (timeInSeconds%60).toInt()
+        val timeString = "$minutes minutes and $remainderSeconds seconds"
+        resultSet.add(timeString)
+
+        resultSet.add(t.externalUrls.spotify.toString())
+        resultSet.add(t.previewUrl.toString())
+
+        return resultSet
+    }
+
 
     // Parses through all the results of a track search and presents them in a way
     // that is digestible by a person.
