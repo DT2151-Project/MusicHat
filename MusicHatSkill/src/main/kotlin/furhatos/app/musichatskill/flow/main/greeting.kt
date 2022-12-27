@@ -20,44 +20,10 @@ val Greeting : State = state(Parent) {
         builtAPI.buildSearchApi()
     }
     onEntry {
-        furhat.ask("What song do you like?")
-    }
-/*
-
-    onResponse<Yes> {
-        furhat.say("")
-    }
-
-    onResponse<No> {
-        furhat.say("No poop.")
-    }
-*/
-
-    onResponse {
-        runBlocking {
-            val searchResults = builtAPI.trackSearch("track:"+it.text)
-            val parsedResults = displayHandler.parsePopularTrackResult(searchResults)
-
-            Util.convertURLtoWAV(parsedResults[Track.PREVIEW.value],parsedResults[Track.NAME.value])
-
-            furhat.say("Oh, you like " + parsedResults[Track.NAME.value])
-            val artistUtt = utterance {
-                + "That is a song by "
-                + parsedResults[Track.ARTIST.value]
-                + Gestures.Wink
-            }
-            furhat.say(artistUtt)
-            val previewUtt = utterance {
-                + "It is "
-                + parsedResults[Track.DURATION.value]
-                + " long. Here is a preview!"
-                + Gestures.BigSmile
-            }
-            furhat.say(previewUtt)
-
-            furhat.say{
-                + Audio(Util.filePathToURL(parsedResults[Track.NAME.value]).toString(), "SONG PREVIEW", speech=true)
-            }
-        }
+        random(
+            { furhat.say("Hello there! I'm MusicHat, the music robot. Let's play music together!") },
+            { furhat.say("Hey buddy! I'm MusicHat, the music robot. Let's listen to some songs!") }
+        )
+        goto(AskUserType)
     }
 }

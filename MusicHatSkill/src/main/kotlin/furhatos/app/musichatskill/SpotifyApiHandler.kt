@@ -11,10 +11,6 @@ class SpotifyApiHandler {
     private val clientSecret = ""
     private var api: SpotifyAppApi? = null
 
-    init {
-
-    }
-
     /// Pulls the developer ClientID and ClientSecret tokens provided
     /// by Spotify and builds them into an object that can easily
     /// call public Spotify APIs.
