@@ -44,3 +44,59 @@ class AskRecommendations: Intent() {
             "You decide")
     }
 }
+
+class AskForPopMusic:Intent(){
+    override fun getExamples(lang: Language): List<String> {
+        return listOf(
+            "Pop music",
+            "I would Like pop music",
+            "Pop",
+            "Pop please"
+        )
+    }
+}
+
+class AskForRockMusic:Intent(){
+    override fun getExamples(lang: Language): List<String> {
+        return listOf(
+            "Rock music",
+            "I would Like rock music",
+            "Rock",
+            "Rock music please"
+        )
+    }
+}
+
+class AskForFolkMusic:Intent(){
+    override fun getExamples(lang: Language): List<String> {
+        return listOf(
+            "Folk music",
+            "I would Like folk music",
+            "Folk",
+            "Folk music please"
+        )
+    }
+}
+
+class AskForHipHopMusic:Intent(){
+    override fun getExamples(lang: Language): List<String> {
+        return listOf(
+            "Hip Hop music",
+            "I would Like hip hop music",
+            "Hip hop",
+            "Hip hop music please"
+        )
+    }
+}
+
+
+class AskForCountryMusic:Intent(){
+    override fun getExamples(lang: Language): List<String> {
+        return listOf(
+            "Country music",
+            "I would Like country music",
+            "Country",
+            "Country music music please"
+        )
+    }
+}
