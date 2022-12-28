@@ -21,17 +21,12 @@ val Greeting : State = state(Parent) {
         builtAPI.buildSearchApi()
     }
     onEntry {
-        furhat.ask("What song do you like?")
+        random(
+            { furhat.say("Hello there! I'm MusicHat, the music robot. Let's play music together!") },
+            { furhat.say("Hey buddy! I'm MusicHat, the music robot. Let's listen to some songs!") }
+        )
+        goto(AskUserType)
     }
-/*
-    onResponse<Yes> {
-        furhat.say("")
-    }
-
-    onResponse<No> {
-        furhat.say("No poop.")
-    }
-*/
 
     // FIND 3 SONGS THAT CORRESPOND TO A GENRE
     /*
@@ -57,10 +52,8 @@ val Greeting : State = state(Parent) {
             //TODO: on new response play the requested song
         }
     }
-     */
 
     // LIST 3 DIFFERENT SONG ARTISTS FOR THE USER TO CHOOSE FROM
-    /*
     onResponse {
         runBlocking{
             val songResult = builtAPI.artistSongSearch("track:"+it.text)
@@ -83,7 +76,7 @@ val Greeting : State = state(Parent) {
             //TODO: on new response play the song by the requested artist
         }
     }
-     */
+    
 
     // FIND A SONG AND PLAY THIS ONE THROUGH FURHAT
     onResponse {
@@ -124,5 +117,5 @@ val Greeting : State = state(Parent) {
             }
         }
     }
-
+   */
 }
