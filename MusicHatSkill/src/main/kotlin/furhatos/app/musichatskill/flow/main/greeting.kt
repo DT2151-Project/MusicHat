@@ -2,18 +2,18 @@ package furhatos.app.musichatskill.flow.main
 
 import DisplayHandler
 import furhatos.app.musichatskill.SpotifyApiHandler
+import furhatos.app.musichatskill.Track
+import furhatos.app.musichatskill.Util
 import furhatos.app.musichatskill.flow.Parent
 import furhatos.flow.kotlin.*
+import furhatos.gestures.Gestures
 import kotlinx.coroutines.runBlocking
 
-import furhatos.app.musichatskill.Track
-import furhatos.gestures.Gestures
-import furhatos.app.musichatskill.Util
-import furhatos.gestures.Gestures.ExpressDisgust
-import kotlin.random.Random
 
 val builtAPI = SpotifyApiHandler()
 val displayHandler = DisplayHandler()
+
+val gestureList = listOf(Gestures.BigSmile, Gestures.Blink, Gestures.BrowFrown, Gestures.BrowRaise, Gestures.CloseEyes, Gestures.ExpressAnger, Gestures.ExpressDisgust, Gestures.ExpressFear, Gestures.ExpressSad, Gestures.GazeAway, Gestures.Nod, Gestures.Oh, Gestures.OpenEyes, Gestures.Roll, Gestures.Shake, Gestures.Smile, Gestures.Surprise, Gestures.Thoughtful, Gestures.Wink)
 
 
 val Greeting : State = state(Parent) {
@@ -108,11 +108,20 @@ val Greeting : State = state(Parent) {
             }
             furhat.say(previewUtt)
 
-            furhat.say{
-                + Audio(Util.filePathToURL(parsedResults[Track.NAME.value]).toString(), "SONG PREVIEW", speech=true)
+            val audioUtt = utterance {
+                + Audio(Util.filePathToURL(parsedResults[Track.NAME.value]).toString(), "SONG PREVIEW", speech=false)
             }
 
-            var gesture = ExpressDisgust
+            furhat.say(audioUtt, async = true)
+
+            println("DONE WITH PLAYING MUSIC")
+
+            val t = System.currentTimeMillis()
+            val end = t + 30000
+            while (System.currentTimeMillis() < end) {
+                furhat.gesture(gestureList.random())
+                Thread.sleep(1000)
+            }
         }
     }
 
