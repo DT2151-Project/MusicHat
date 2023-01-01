@@ -75,27 +75,44 @@ class SpotifyApiHandler {
         var searchResult: PagingObject<Track>
         var trackURI = String()
         try {
-            searchResult = api!!.search.searchTrack(trackQuery.removeWhitespaces(), 25, 1, market=Market.US)
+            searchResult = api!!.search.searchTrack(trackQuery, 25, 1, market=Market.US)
 
-            if (artistQuery.isNotEmpty()) {
-                for (i in searchResult) {
+            for (i in searchResult) {
+                if (i.previewUrl.isNullOrEmpty()) continue
+                if (artistQuery.isNotEmpty()) {
                     if (i.artists.first().name == artistQuery) {
                         trackURI = i.uri.uri
                     }
+                } else if (trackURI.isEmpty()) {
+                    trackURI = i.uri.uri
                 }
-            }
-            if (trackURI.isEmpty()) {
-                trackURI = searchResult[0].uri.uri
             }
         } catch (e: Exception) {
             println("# Unable to retrieve track from Spotify API #")
-
             throw e
         }
 
         return api!!.tracks.getTrack(trackURI, market=Market.US)
     }
 
+    // Recommend a song from a given artist.
+    // Return: related Track
+    suspend fun relatedTrackSearch(artistQuery: String): Track {
+        var relatedArtist = artistRelatedSearch(artistQuery).random()
+
+        var trackList: List<Track>
+        try {
+            trackList = api!!.artists.getArtistTopTracks(relatedArtist.name, market=Market.US)
+        } catch (e: Exception) {
+            println("# Unable to find artist top tracks from Spotify API #")
+            throw e
+        }
+
+        return trackList[(0 until 5).random()]
+    }
+
+    // Find related artists
+    // Return: list of Artists
     suspend fun artistRelatedSearch(searchQuery: String): List<Artist> {
         try {
             return api!!.artists.getRelatedArtists(searchQuery.removeWhitespaces())
@@ -120,16 +137,12 @@ class SpotifyApiHandler {
         for (i in searchResult!!.items){
             var item = Pair(i.artists.first().name, i)
 
-            if (artistList.all { it.first != item.first }) {
+            if (artistList.all { it.first != item.first } && !i.previewUrl.isNullOrEmpty())
                 artistList.add(item)
-            }
         }
 
         val artistSuggestion: MutableList<Track> = mutableListOf()
-        for (t in artistList.shuffled().drop(artistList.size-3)) {
-            println(t.first)
-            artistSuggestion.add(t.second)
-        }
+        for (t in artistList.shuffled().drop(artistList.size-3)) artistSuggestion.add(t.second)
 
         return artistSuggestion
     }
