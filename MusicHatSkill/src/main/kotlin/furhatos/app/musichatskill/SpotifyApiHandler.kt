@@ -78,6 +78,7 @@ class SpotifyApiHandler {
             searchResults = api!!.search.searchTrack(trackQuery, 25, 1, market=Market.US)
 
             for (i in searchResults) {
+
                 if (i.previewUrl.isNullOrEmpty()) continue
                 if (artistQuery.isNotEmpty()) {
                     if (i.artists.first().name == artistQuery) {
@@ -89,7 +90,6 @@ class SpotifyApiHandler {
             }
         } catch (e: Exception) {
             println("# Unable to retrieve track from Spotify API #")
-            println("# trackQuery: ${trackQuery}, artistQuery: ${artistQuery} #")
             throw e
         }
 
