@@ -72,33 +72,54 @@ class SpotifyApiHandler {
     // Find a track
     // Return: single track
     suspend fun trackSearch(trackQuery: String, artistQuery: String = ""): Track? {
-        var searchResult: PagingObject<Track>
+        var searchResults: PagingObject<Track>
         var trackURI = String()
         try {
-            searchResult = api!!.search.searchTrack(trackQuery.removeWhitespaces(), 25, 1, market=Market.US)
+            searchResults = api!!.search.searchTrack(trackQuery, 25, 1, market=Market.US)
 
-            if (artistQuery.isNotEmpty()) {
-                for (i in searchResult) {
+            for (i in searchResults) {
+                if (i.previewUrl.isNullOrEmpty()) continue
+                if (artistQuery.isNotEmpty()) {
                     if (i.artists.first().name == artistQuery) {
                         trackURI = i.uri.uri
                     }
+                } else if (trackURI.isEmpty()) {
+                    trackURI = i.uri.uri
                 }
-            }
-            if (trackURI.isEmpty()) {
-                trackURI = searchResult[0].uri.uri
             }
         } catch (e: Exception) {
             println("# Unable to retrieve track from Spotify API #")
-
+            println("# trackQuery: ${trackQuery}, artistQuery: ${artistQuery} #")
             throw e
         }
 
         return api!!.tracks.getTrack(trackURI, market=Market.US)
     }
 
-    suspend fun artistRelatedSearch(searchQuery: String): List<Artist> {
+    // Recommend a song from a given artist.
+    // Return: related Track, or null if artist has no related artists
+    suspend fun relatedTrackSearch(artistId: String): Track? {
+        var relatedArtists = artistRelatedSearch(artistId)
+        if (relatedArtists.isEmpty()) {
+            return null
+        }
+        var relatedArtist = relatedArtists.random()
+        var trackList: List<Track>
         try {
-            return api!!.artists.getRelatedArtists(searchQuery.removeWhitespaces())
+            trackList = api!!.artists.getArtistTopTracks(relatedArtist.id, market=Market.US)
+        } catch (e: Exception) {
+            println("# Unable to find artist top tracks from Spotify API #")
+            throw e
+        }
+
+        return trackList[(0 until 5).random()]
+    }
+
+    // Find related artists
+    // Return: list of Artists
+    suspend fun artistRelatedSearch(artistId: String): List<Artist> {
+        try {
+            return api!!.artists.getRelatedArtists(artistId.removeWhitespaces())
         } catch (e: Exception){
             println("# Unable to retrieve related artists from Spotify API #")
             throw e
@@ -120,18 +141,18 @@ class SpotifyApiHandler {
         for (i in searchResult!!.items){
             var item = Pair(i.artists.first().name, i)
 
-            if (artistList.all { it.first != item.first }) {
+            if (artistList.all { it.first != item.first } && !i.previewUrl.isNullOrEmpty())
                 artistList.add(item)
-            }
         }
 
         val artistSuggestion: MutableList<Track> = mutableListOf()
-        for (t in artistList.shuffled().drop(artistList.size-3)) {
-            println(t.first)
-            artistSuggestion.add(t.second)
-        }
+        for (t in artistList.shuffled().drop(artistList.size-3)) artistSuggestion.add(t.second)
 
         return artistSuggestion
+    }
+
+    suspend fun getAudioFeatures(trackId: String): AudioFeatures {
+        return api!!.tracks.getAudioFeatures(trackId)
     }
 
 }
