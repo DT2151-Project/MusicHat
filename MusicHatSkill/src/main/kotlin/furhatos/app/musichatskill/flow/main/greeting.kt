@@ -15,7 +15,6 @@ val displayHandler = DisplayHandler()
 
 val gestureList = listOf(Gestures.BigSmile, Gestures.Blink, Gestures.BrowFrown, Gestures.BrowRaise, Gestures.CloseEyes, Gestures.ExpressAnger, Gestures.ExpressDisgust, Gestures.ExpressFear, Gestures.ExpressSad, Gestures.GazeAway, Gestures.Nod, Gestures.Oh, Gestures.OpenEyes, Gestures.Roll, Gestures.Shake, Gestures.Smile, Gestures.Surprise, Gestures.Thoughtful, Gestures.Wink)
 
-
 val Greeting : State = state(Parent) {
     runBlocking {
         builtAPI.buildSearchApi()
@@ -26,11 +25,14 @@ val Greeting : State = state(Parent) {
             { furhat.say("Hey buddy! I'm MusicHat, the music robot. Let's listen to some songs!") }
         )
         goto(AskUserType)
+/*        runBlocking {
+            val relatedArtists = builtAPI.artistRelatedSearch("3a1tBryiczPAZpgoZN9Rzg")
+            println(relatedArtists)
+        }*/
     }
 
     // FIND 3 SONGS THAT CORRESPOND TO A GENRE
-    /*
-    onResponse {
+/*    onResponse {
         runBlocking {
             val genreResult = builtAPI.genreSearch("playlist:"+it.text)
 
@@ -51,10 +53,10 @@ val Greeting : State = state(Parent) {
             furhat.say(selectUtt)
             //TODO: on new response play the requested song
         }
-    }
+    }*/
 
     // LIST 3 DIFFERENT SONG ARTISTS FOR THE USER TO CHOOSE FROM
-    onResponse {
+/*    onResponse {
         runBlocking{
             val songResult = builtAPI.artistSongSearch("track:"+it.text)
 
@@ -75,11 +77,11 @@ val Greeting : State = state(Parent) {
             furhat.say(selectUtt)
             //TODO: on new response play the song by the requested artist
         }
-    }
+    }*/
     
 
     // FIND A SONG AND PLAY THIS ONE THROUGH FURHAT
-    onResponse {
+/*    onResponse {
         runBlocking {
             val searchResults = builtAPI.trackSearch("track:"+it.text)
             val parsedResults = displayHandler.formatTrackResult(searchResults)
@@ -116,6 +118,5 @@ val Greeting : State = state(Parent) {
                 Thread.sleep(1000)
             }
         }
-    }
-   */
+    }*/
 }
