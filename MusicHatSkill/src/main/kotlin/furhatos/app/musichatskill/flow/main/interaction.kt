@@ -34,12 +34,23 @@ val AskUserType:State = state {
     onResponse<MNConfirm> {
         furhat.say("Welcome, music nerd!")
         users.current.type = UserType.MUSIC_NERD
+        goto(AskGenre)
     }
 }
 
+
 val ProvideService:State = state {
     onEntry {
-        furhat.ask("I can recommend music, or you can tell me the name of a song and I will play it for you.")
+        furhat.ask("Do you want some recommendation from me?")
+    }
+
+    onResponse<Yes> {
+        if (users.current.type != null) {
+            furhat.say("Ok, let me recommend something suitable for a ${users.current.type!!.asString}")
+        } else {
+            furhat.say("Ok, let me recommend something")
+        }
+        goto(RecommendMusic)
     }
 
     onResponse<AskRecommendations> {
@@ -51,28 +62,48 @@ val ProvideService:State = state {
         goto(RecommendMusic)
     }
 
-        onResponse {
-        furhat.say("Ok, I'll try to play "+ it.text)
-        runBlocking {
-            val track = builtAPI.trackSearch("track:${it.text}")
-            if (track == null) {
-                furhat.say("I could not find any song by that name.")
-                reentry()
-            } else {
-                furhat.say("Playing ${track.name} by ${track.artists[0].name}")
-                users.current.listeningHabits.artists.add(track.artists[0])
-                playTrack(furhat, track)
-                goto(MoreMusic)
-            }
-        }
+    onResponse {
+        goto(AskMusicName)
     }
 }
+
+//val ProvideService:State = state {
+//    onEntry {
+//        furhat.ask("I can recommend music, or you can tell me the name of a song and I will play it for you.")
+//    }
+//
+//    onResponse<AskRecommendations> {
+//        if (users.current.type != null) {
+//            furhat.say("Ok, let me recommend something suitable for a ${users.current.type!!.asString}")
+//        } else {
+//            furhat.say("Ok, let me recommend something")
+//        }
+//        goto(RecommendMusic)
+//    }
+//
+//    onResponse {
+//        furhat.say("Ok, I'll try to play "+ it.text)
+//        runBlocking {
+//            val track = builtAPI.trackSearch("track:${it.text}")
+//            if (track == null) {
+//                furhat.say("I could not find any song by that name.")
+//                reentry()
+//            } else {
+//                furhat.say("Playing ${track.name} by ${track.artists[0].name}")
+//                users.current.listeningHabits.artists.add(track.artists[0])
+//                playTrack(furhat, track)
+//                goto(MoreMusic)
+//            }
+//        }
+//    }
+//}
+
 
 val RecommendMusic:State = state {
     var currentTrack: Track? = null;
 
     onEntry {
-        if (!users.current.listeningHabits.artists.isEmpty()) {
+        if (users.current.listeningHabits.artists.isNotEmpty()) {
             runBlocking {
                 val someArtist = users.current.listeningHabits.artists.random()
                 val relatedTrack = builtAPI.relatedTrackSearch(someArtist.id)
@@ -85,7 +116,19 @@ val RecommendMusic:State = state {
         }
 
         runBlocking {
-            val playlistQuery = if (users.current.type == UserType.DANCE_MANIAC) "dance hits" else "top 100 songs"
+            var playlistQuery = ""
+            playlistQuery = when (users.current.type ) {
+                UserType.DANCE_MANIAC -> "dance hits"
+                UserType.CASUAL_LISTENER -> "top 100 songs"
+                UserType.MUSIC_NERD -> {
+                    if (users.current.currrentGenre.isNullOrEmpty())
+                        "top 100 songs"
+                    else
+                        users.current.currrentGenre.toString()
+                }
+                else -> "top 100 songs"
+            }
+
             val track = builtAPI.genreSearch("playlist:${playlistQuery}").random()
             if (track == null) {
                 furhat.say("Hold on just a minute, I'll try to find you something..")
@@ -106,6 +149,16 @@ val RecommendMusic:State = state {
         }
     }
 
+    onResponse<YesStaff> {
+        users.current.listeningHabits.artists.add(currentTrack!!.artists[0])
+        furhat.say("Ok, let's hear it!")
+        runBlocking {
+            playTrack(furhat, currentTrack!!)
+            goto(MoreMusic)
+        }
+    }
+
+
     onResponse<No> {
         random(
             { furhat.say("No? Alright, I'll recommend another") },
@@ -115,6 +168,8 @@ val RecommendMusic:State = state {
         reentry()
     }
 }
+
+
 
 val MoreMusic:State = state {
     onEntry {
@@ -138,7 +193,11 @@ val MoreMusic:State = state {
             { furhat.say("Great") },
             { furhat.say("Alright") }
         )
-        goto(ProvideService)
+
+        if (users.current.type == UserType.MUSIC_NERD)
+            goto(ConfirmMusicGenre)
+        else
+            goto(ProvideService)
     }
 
     onResponse<No> {
@@ -150,10 +209,98 @@ val MoreMusic:State = state {
         )
         goto(Idle)
     }
+
 }
 
+val ConfirmMusicGenre: State = state {
+    onEntry {
+        furhat.ask("Do you want music in the same genre? ")
+    }
+
+    onResponse<Yes> {
+        goto(ProvideService)
+    }
+
+    onResponse<No>{
+        goto(AskGenre)
+    }
+}
+
+val AskGenre: State = state {
+    onEntry {
+        furhat.ask( "What kind of genre do you like?")
+    }
+
+    onResponse {
+        users.current.currrentGenre = it.text
+        furhat.say(it.text + "Great.")
+        goto(ProvideService)
+    }
+}
+
+
+val AskMusicName = state {
+    onEntry {
+        furhat.say("OK. Maybe I can ask you more in detail.")
+        furhat.ask("Can you tell me the name of the song you like?")
+    }
+
+    onResponse {
+        furhat.say( it.text + " Great.")
+        users.current.currrentMusicName = it.text
+        goto(AskArtistName)
+    }
+}
+
+val AskArtistName = state {
+    onEntry {
+        furhat.ask("Can you tell me the artist of the song?")
+    }
+
+    onResponse<IDK> {
+        users.current.currrentMusicArtist = ""
+        furhat.say("Ok")
+        goto(SearchAndPlayMusic)
+    }
+
+    onResponse {
+        furhat.say(it.text + " Got it.")
+        users.current.currrentMusicArtist = it.text
+        goto(SearchAndPlayMusic)
+    }
+}
+
+val SearchAndPlayMusic = state {
+    onEntry {
+        furhat.say("Great! ")
+
+        runBlocking {
+
+            val musicTrack = if (users.current.currrentMusicName.isNullOrEmpty()) "" else users.current.currrentMusicName.toString()
+            val musicArtist = if (users.current.currrentMusicArtist.isNullOrEmpty()) "" else users.current.currrentMusicArtist.toString()
+
+            val track = builtAPI.trackSearch("track: $musicTrack", musicArtist)
+            if (track == null) {
+                furhat.say("I could not find any song by that name.")
+                goto(ProvideService)
+            } else {
+                furhat.say("Playing ${track.name} by ${track.artists[0].name}")
+                users.current.listeningHabits.artists.add(track.artists[0])
+
+                playTrack(furhat, track!!)
+                goto(MoreMusic)
+            }
+        }
+    }
+}
+
+
+
 suspend fun playTrack(furhat: Furhat, track: Track) {
-    if (track.previewUrl == null) return
+    if (track.previewUrl == null) {
+        println("No track previewURL !!!")
+        return
+    }
     Util.convertURLtoWAV(track.previewUrl!!, track.name)
 
     val audioUtt = utterance {
@@ -171,16 +318,16 @@ suspend fun playTrack(furhat: Furhat, track: Track) {
     while (interval < 500) {
         interval *= 2
     }
-    while (System.currentTimeMillis() < end) {
-        furhat.gesture(Gestures.Nod)
-        furhat.gesture(Gestures.BigSmile)
-        Thread.sleep(interval.toLong())
-    }
+//    while (System.currentTimeMillis() < end) {
+//        furhat.gesture(Gestures.Nod)
+//        furhat.gesture(Gestures.BigSmile)
+//        Thread.sleep(interval.toLong())
+//    }
 
 
     // THE BEST DANCE IN THE WORLD
-    /*while (System.currentTimeMillis() < end) {
+    while (System.currentTimeMillis() < end) {
         furhat.gesture(gestureList.random())
         Thread.sleep(1000)
-    }*/
+    }
 }
