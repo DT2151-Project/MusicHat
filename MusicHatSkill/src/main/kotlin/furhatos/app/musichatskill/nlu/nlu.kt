@@ -49,7 +49,7 @@ class IDK: Intent(){
     override fun getExamples(lang: Language): List<String> {
         return listOf("I don't know.",
             "Whatever",
-            "I forget.",
+            "I forgot.",
             "Anyone is ok.")
     }
 }

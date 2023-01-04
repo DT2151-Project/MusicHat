@@ -19,6 +19,6 @@ val User.listeningHabits : ListeningHabits
     get() = data.getOrPut(ListeningHabits::class.qualifiedName, ListeningHabits())
 
 
-var User.currrentMusicName : String? by UserDataDelegate()
-var User.currrentMusicArtist : String? by UserDataDelegate()
-var User.currrentGenre : String? by UserDataDelegate()
+var User.currentTrackName : String? by UserDataDelegate()
+var User.currentArtistName : String? by UserDataDelegate()
+var User.currentGenre : String? by UserDataDelegate()
