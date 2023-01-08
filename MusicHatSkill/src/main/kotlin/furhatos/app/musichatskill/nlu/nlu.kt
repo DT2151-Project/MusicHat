@@ -44,3 +44,23 @@ class AskRecommendations: Intent() {
             "You decide")
     }
 }
+
+class IDK: Intent(){
+    override fun getExamples(lang: Language): List<String> {
+        return listOf("I don't know.",
+            "Whatever",
+            "I forgot.",
+            "Anyone is ok.")
+    }
+}
+
+
+class YesStaff: Intent(){
+    override fun getExamples(lang: Language): List<String> {
+        return listOf("Great.",
+                "Yeah",
+                "Yea",
+                "That is great",
+                "Awesome")
+    }
+}

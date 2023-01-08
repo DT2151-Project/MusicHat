@@ -5,10 +5,11 @@ import com.adamratzman.spotify.models.Track
 import furhatos.app.musichatskill.Util
 import furhatos.app.musichatskill.nlu.*
 import furhatos.flow.kotlin.*
-import furhatos.gestures.Gestures
 import furhatos.nlu.common.No
 import furhatos.nlu.common.Yes
 import kotlinx.coroutines.runBlocking
+
+var songPlayedSuccessfully = false
 
 val AskUserType:State = state {
     onEntry {
@@ -34,12 +35,24 @@ val AskUserType:State = state {
     onResponse<MNConfirm> {
         furhat.say("Welcome, music nerd!")
         users.current.type = UserType.MUSIC_NERD
+        goto(AskGenre)
     }
 }
 
+
 val ProvideService:State = state {
     onEntry {
-        furhat.ask("I can recommend music, or you can tell me the name of a song and I will play it for you.")
+        furhat.say("I can recommend a song, or you could tell me the name of a song you want to hear.")
+        furhat.ask("Would you like me to recommend a song?")
+    }
+
+    onResponse<Yes> {
+        if (users.current.type != null) {
+            furhat.say("Ok, let me recommend something suitable for a ${users.current.type!!.asString}")
+        } else {
+            furhat.say("Ok, let me recommend something")
+        }
+        goto(RecommendMusic)
     }
 
     onResponse<AskRecommendations> {
@@ -51,28 +64,48 @@ val ProvideService:State = state {
         goto(RecommendMusic)
     }
 
-        onResponse {
-        furhat.say("Ok, I'll try to play "+ it.text)
-        runBlocking {
-            val track = builtAPI.trackSearch("track:${it.text}")
-            if (track == null) {
-                furhat.say("I could not find any song by that name.")
-                reentry()
-            } else {
-                furhat.say("Playing ${track.name} by ${track.artists[0].name}")
-                users.current.listeningHabits.artists.add(track.artists[0])
-                playTrack(furhat, track)
-                goto(MoreMusic)
-            }
-        }
+    onResponse<No> {
+        goto(AskMusicName)
     }
 }
 
+//val ProvideService:State = state {
+//    onEntry {
+//        furhat.ask("I can recommend music, or you can tell me the name of a song and I will play it for you.")
+//    }
+//
+//    onResponse<AskRecommendations> {
+//        if (users.current.type != null) {
+//            furhat.say("Ok, let me recommend something suitable for a ${users.current.type!!.asString}")
+//        } else {
+//            furhat.say("Ok, let me recommend something")
+//        }
+//        goto(RecommendMusic)
+//    }
+//
+//    onResponse {
+//        furhat.say("Ok, I'll try to play "+ it.text)
+//        runBlocking {
+//            val track = builtAPI.trackSearch("track:${it.text}")
+//            if (track == null) {
+//                furhat.say("I could not find any song by that name.")
+//                reentry()
+//            } else {
+//                furhat.say("Playing ${track.name} by ${track.artists[0].name}")
+//                users.current.listeningHabits.artists.add(track.artists[0])
+//                playTrack(furhat, track)
+//                goto(MoreMusic)
+//            }
+//        }
+//    }
+//}
+
+
 val RecommendMusic:State = state {
-    var currentTrack: Track? = null;
+    var currentTrack: Track? = null
 
     onEntry {
-        if (!users.current.listeningHabits.artists.isEmpty()) {
+        if (users.current.listeningHabits.artists.isNotEmpty()) {
             runBlocking {
                 val someArtist = users.current.listeningHabits.artists.random()
                 val relatedTrack = builtAPI.relatedTrackSearch(someArtist.id)
@@ -85,7 +118,18 @@ val RecommendMusic:State = state {
         }
 
         runBlocking {
-            val playlistQuery = if (users.current.type == UserType.DANCE_MANIAC) "dance hits" else "top 100 songs"
+            val playlistQuery: String = when (users.current.type ) {
+                UserType.DANCE_MANIAC -> "dance hits"
+                UserType.CASUAL_LISTENER -> "top 100 songs"
+                UserType.MUSIC_NERD -> {
+                    if (users.current.currentGenre.isNullOrEmpty())
+                        "top 100 songs"
+                    else
+                        users.current.currentGenre.toString()
+                }
+                else -> "top 100 songs"
+            }
+
             val track = builtAPI.genreSearch("playlist:${playlistQuery}").random()
             if (track == null) {
                 furhat.say("Hold on just a minute, I'll try to find you something..")
@@ -101,10 +145,26 @@ val RecommendMusic:State = state {
         users.current.listeningHabits.artists.add(currentTrack!!.artists[0])
         furhat.say("Ok, let's hear it!")
         runBlocking {
-            playTrack(furhat, currentTrack!!)
+            songPlayedSuccessfully = playTrack(furhat, currentTrack!!)
+            if (!songPlayedSuccessfully) {
+                furhat.say("Sorry, I was unable to play that song.")
+            }
             goto(MoreMusic)
         }
     }
+
+    onResponse<YesStaff> {
+        users.current.listeningHabits.artists.add(currentTrack!!.artists[0])
+        furhat.say("Ok, let's hear it!")
+        runBlocking {
+            songPlayedSuccessfully = playTrack(furhat, currentTrack!!)
+            if (!songPlayedSuccessfully) {
+                furhat.say("Sorry, I was unable to play that song.")
+            }
+            goto(MoreMusic)
+        }
+    }
+
 
     onResponse<No> {
         random(
@@ -116,14 +176,19 @@ val RecommendMusic:State = state {
     }
 }
 
+
+
 val MoreMusic:State = state {
     onEntry {
-        random(
-            { furhat.say("Wow, what a great song!") },
-            { furhat.say("That song is the bomb, man.") },
-            { furhat.say("Well, I don't like that song. But you do, so good for you.") },
-            { furhat.say("That was a real banger, huh?") }
-        )
+        if (songPlayedSuccessfully) {
+            random(
+                { furhat.say("Wow, what a great song!") },
+                { furhat.say("That song is the bomb, man.") },
+                { furhat.say("Well, I don't like that song. But you do, so good for you.") },
+                { furhat.say("That was a real banger, huh?") }
+            )
+            songPlayedSuccessfully = false
+        }
         random(
             { furhat.ask("Wanna hear another one?") },
             { furhat.ask("Would you like me to play something else?") },
@@ -138,7 +203,11 @@ val MoreMusic:State = state {
             { furhat.say("Great") },
             { furhat.say("Alright") }
         )
-        goto(ProvideService)
+
+        if (users.current.type == UserType.MUSIC_NERD)
+            goto(ConfirmMusicGenre)
+        else
+            goto(ProvideService)
     }
 
     onResponse<No> {
@@ -150,10 +219,94 @@ val MoreMusic:State = state {
         )
         goto(Idle)
     }
+
 }
 
-suspend fun playTrack(furhat: Furhat, track: Track) {
-    if (track.previewUrl == null) return
+val ConfirmMusicGenre: State = state {
+    onEntry {
+        furhat.ask("Do you want music in the same genre? ")
+    }
+
+    onResponse<Yes> {
+        goto(ProvideService)
+    }
+
+    onResponse<No>{
+        goto(AskGenre)
+    }
+}
+
+val AskGenre: State = state {
+    onEntry {
+        furhat.ask( "What kind of genre do you like?")
+    }
+
+    onResponse {
+        users.current.currentGenre = it.text
+        furhat.say("Ok, you like the genre " + it.text)
+        goto(ProvideService)
+    }
+}
+
+
+val AskMusicName = state {
+    onEntry {
+        furhat.ask("Alright. Can you tell me the name of the song you like?")
+    }
+
+    onResponse {
+        furhat.say( "Ok, you like " + it.text)
+        users.current.currentTrackName = it.text
+        goto(AskArtistName)
+    }
+}
+
+val AskArtistName = state {
+    onEntry {
+        furhat.ask("What is the name of the artist of this song?")
+    }
+
+    onResponse<IDK> {
+        users.current.currentArtistName = ""
+        furhat.say("Ok, you don't know. I'll try to play " + users.current.currentTrackName)
+        goto(SearchAndPlayMusic)
+    }
+
+    onResponse {
+        furhat.say("Ok, I'll try to play " + users.current.currentTrackName + " by " + it.text)
+        users.current.currentArtistName = it.text
+        goto(SearchAndPlayMusic)
+    }
+}
+
+val SearchAndPlayMusic = state {
+    onEntry {
+        runBlocking {
+
+            val musicTrack = if (users.current.currentTrackName.isNullOrEmpty()) "" else users.current.currentTrackName.toString()
+            val musicArtist = if (users.current.currentArtistName.isNullOrEmpty()) "" else users.current.currentArtistName.toString()
+
+            val track = builtAPI.trackSearch("track:$musicTrack", musicArtist)
+            if (track == null) {
+                furhat.say("Sorry, I could not find that song.")
+                goto(ProvideService)
+            } else {
+                furhat.say("Playing ${track.name} by ${track.artists[0].name}")
+                users.current.listeningHabits.artists.add(track.artists[0])
+                playTrack(furhat, track)
+                goto(MoreMusic)
+            }
+        }
+    }
+}
+
+
+
+suspend fun playTrack(furhat: Furhat, track: Track): Boolean {
+    if (track.previewUrl == null) {
+        println("No track previewURL !!!")
+        return false
+    }
     Util.convertURLtoWAV(track.previewUrl!!, track.name)
 
     val audioUtt = utterance {
@@ -171,16 +324,17 @@ suspend fun playTrack(furhat: Furhat, track: Track) {
     while (interval < 500) {
         interval *= 2
     }
-    while (System.currentTimeMillis() < end) {
-        furhat.gesture(Gestures.Nod)
-        furhat.gesture(Gestures.BigSmile)
-        Thread.sleep(interval.toLong())
-    }
+//    while (System.currentTimeMillis() < end) {
+//        furhat.gesture(Gestures.Nod)
+//        furhat.gesture(Gestures.BigSmile)
+//        Thread.sleep(interval.toLong())
+//    }
 
 
     // THE BEST DANCE IN THE WORLD
-    /*while (System.currentTimeMillis() < end) {
+    while (System.currentTimeMillis() < end) {
         furhat.gesture(gestureList.random())
         Thread.sleep(1000)
-    }*/
+    }
+    return true
 }

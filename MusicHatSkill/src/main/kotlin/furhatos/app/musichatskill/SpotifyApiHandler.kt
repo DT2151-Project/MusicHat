@@ -31,16 +31,10 @@ class SpotifyApiHandler {
         }
     }
 
-    // Performs Spotify database query for queries related to user information. Returns
-    // the results as a SpotifyPublicUser object.
-    suspend fun userSearch(userQuery: String): SpotifyPublicUser? {
-        return api!!.users.getProfile(userQuery.removeWhitespaces())
-    }
-
     // Find a list of songs related to a specific genre
     // Return: 3 random songs
     suspend fun genreSearch(searchQuery: String): MutableList<Track?> {
-        var playlistResult: PagingObject<SimplePlaylist>? = null
+        val playlistResult: PagingObject<SimplePlaylist>?
         try {
             playlistResult = api!!.search.searchPlaylist(searchQuery.removeWhitespaces(), 5, 1, market=Market.US)
         } catch (e: Exception) {
@@ -48,7 +42,7 @@ class SpotifyApiHandler {
             throw e
         }
 
-        var trackResults: Playlist? = null
+        val trackResults: Playlist?
         try {
             trackResults = api!!.playlists.getPlaylist(playlistResult[0].uri.uri, market=Market.US)
         } catch (e: Exception) {
@@ -72,7 +66,7 @@ class SpotifyApiHandler {
     // Find a track
     // Return: single track
     suspend fun trackSearch(trackQuery: String, artistQuery: String = ""): Track? {
-        var searchResults: PagingObject<Track>
+        val searchResults: PagingObject<Track>
         var trackURI = String()
         try {
             searchResults = api!!.search.searchTrack(trackQuery, 25, 1, market=Market.US)
@@ -92,19 +86,19 @@ class SpotifyApiHandler {
             println("# Unable to retrieve track from Spotify API #")
             throw e
         }
-
+        if (trackURI == "") { return null }
         return api!!.tracks.getTrack(trackURI, market=Market.US)
     }
 
     // Recommend a song from a given artist.
     // Return: related Track, or null if artist has no related artists
     suspend fun relatedTrackSearch(artistId: String): Track? {
-        var relatedArtists = artistRelatedSearch(artistId)
+        val relatedArtists = artistRelatedSearch(artistId)
         if (relatedArtists.isEmpty()) {
             return null
         }
-        var relatedArtist = relatedArtists.random()
-        var trackList: List<Track>
+        val relatedArtist = relatedArtists.random()
+        val trackList: List<Track>
         try {
             trackList = api!!.artists.getArtistTopTracks(relatedArtist.id, market=Market.US)
         } catch (e: Exception) {
@@ -129,7 +123,7 @@ class SpotifyApiHandler {
     // Find artists that have a track under the song name
     // Return: the song by 3 random artists
     suspend fun artistSongSearch(searchQuery: String): MutableList<Track> {
-        var searchResult: PagingObject<Track>? = null
+        val searchResult: PagingObject<Track>?
         try {
             searchResult = api!!.search.searchTrack(searchQuery.removeWhitespaces(), 10, 1, market=Market.US)
         } catch (e: Exception) {
@@ -138,8 +132,8 @@ class SpotifyApiHandler {
         }
 
         val artistList:MutableList<Pair<String, Track>> = mutableListOf()
-        for (i in searchResult!!.items){
-            var item = Pair(i.artists.first().name, i)
+        for (i in searchResult.items){
+            val item = Pair(i.artists.first().name, i)
 
             if (artistList.all { it.first != item.first } && !i.previewUrl.isNullOrEmpty())
                 artistList.add(item)

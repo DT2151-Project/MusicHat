@@ -9,6 +9,7 @@ enum class UserType(val asString: String) {
     CASUAL_LISTENER("casual listener"),
     MUSIC_NERD("music nerd")
 }
+
 class ListeningHabits(
     var artists: MutableSet<SimpleArtist> = mutableSetOf<SimpleArtist>()
 )
@@ -16,3 +17,8 @@ class ListeningHabits(
 var User.type : UserType? by UserDataDelegate()
 val User.listeningHabits : ListeningHabits
     get() = data.getOrPut(ListeningHabits::class.qualifiedName, ListeningHabits())
+
+
+var User.currentTrackName : String? by UserDataDelegate()
+var User.currentArtistName : String? by UserDataDelegate()
+var User.currentGenre : String? by UserDataDelegate()
