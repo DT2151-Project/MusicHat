@@ -251,13 +251,25 @@ val AskGenre: State = state {
 
 val AskMusicName = state {
     onEntry {
-        furhat.ask("Alright. Can you tell me the name of the song you like?")
+        furhat.ask("Alright. Can you tell me the name of the song you want to hear?")
     }
 
+
     onResponse {
-        furhat.say( "Ok, you like " + it.text)
-        users.current.currentTrackName = it.text
-        goto(AskArtistName)
+        val titleAndMaybeArtist = it.text.split(" by ")
+        if (titleAndMaybeArtist.size == 1) {
+            val title = titleAndMaybeArtist[0]
+            furhat.say("Ok, you like $title")
+            users.current.currentTrackName = title
+            goto(AskArtistName)
+        } else if (titleAndMaybeArtist.size == 2){
+            val title = titleAndMaybeArtist[0]
+            val artist = titleAndMaybeArtist[1]
+            users.current.currentTrackName = title
+            users.current.currentArtistName = artist
+            furhat.say("Ok, I'll try to play $title by $artist")
+            goto(SearchAndPlayMusic)
+        }
     }
 }
 
